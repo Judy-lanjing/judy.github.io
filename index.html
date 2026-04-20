@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>蓝鲸 | 产品经理 & 技术实操者</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'Noto Sans SC', 'system-ui', 'sans-serif'],
+                    },
+                    colors: {
+                        apple: {
+                            blue: '#007AFF',
+                            gray: '#8E8E93',
+                            light: '#F5F5F7',
+                            dark: '#1D1D1F',
+                            card: '#FFFFFF',
+                        }
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 20px rgba(0, 0, 0, 0.08)',
+                        'hover': '0 8px 30px rgba(0, 0, 0, 0.12)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        * {
+            scroll-behavior: smooth;
+        }
+        
+        .hero-section {
+            position: relative;
+        }
+        
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: url('https://picsum.photos/1920/1080?random=1');
+            background-size: cover;
+            background-position: center;
+            opacity: 0.1;
+            z-index: -1;
+        }
+        
+        .card-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-4px);
+        }
+        
+        .social-btn {
+            transition: all 0.2s ease;
+        }
+        
+        .social-btn:hover {
+            transform: scale(1.05);
+        }
+        
+        .project-card {
+            overflow: hidden;
+        }
+        
+        .project-card img {
+            transition: transform 0.5s ease;
+        }
+        
+        .project-card:hover img {
+            transform: scale(1.05);
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.8s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .skill-tag {
+            transition: all 0.2s ease;
+        }
+        
+        .skill-tag:hover {
+            background-color: #007AFF;
+            color: white;
+        }
+    </style>
+</head>
+<body class="bg-apple-light text-apple-dark font-sans antialiased">
+    <!-- Navigation -->
+    <nav class="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <span class="text-xl font-semibold tracking-tight">蓝鲸</span>
+                </div>
+                <div class="hidden md:flex space-x-8">
+                    <a href="#about" class="text-sm font-medium text-gray-600 hover:text-apple-blue transition-colors">关于我</a>
+                    <a href="#projects" class="text-sm font-medium text-gray-600 hover:text-apple-blue transition-colors">作品</a>
+                    <a href="#contact" class="text-sm font-medium text-gray-600 hover:text-apple-blue transition-colors">联系我</a>
+                </div>
+                <button id="mobile-menu-btn" class="md:hidden p-2 rounded-lg hover:bg-gray-100">
+                    <i class="fas fa-bars text-gray-600"></i>
+                </button>
+            </div>
+        </div>
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden md:hidden bg-white border-t border-gray-100">
+            <div class="px-4 py-3 space-y-2">
+                <a href="#about" class="block px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50">关于我</a>
+                <a href="#projects" class="block px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50">作品</a>
+                <a href="#contact" class="block px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50">联系我</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-section pt-32 pb-20 px-4 sm:px-6 lg:px-8 min-h-screen flex items-center">
+        <div class="max-w-4xl mx-auto w-full text-center">
+            <div class="inline-flex items-center px-3 py-1 rounded-full bg-blue-50 text-apple-blue text-xs font-medium mb-6">
+                <span class="w-2 h-2 rounded-full bg-apple-blue mr-2 animate-pulse"></span>
+                技术实操者 · 产品经理
+            </div>
+            <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-6">
+                你好，我是<br>
+                <span>蓝鲸</span>
+            </h1>
+            <p class="text-lg text-gray-600 mb-8 leading-relaxed max-w-2xl mx-auto">
+                专注于产品设计与技术实现的跨界实践者。相信优秀的产品源于对技术的深刻理解，而卓越的技术需要产品思维的指引。
+            </p>
+            <div class="flex flex-wrap gap-4 justify-center">
+                <a href="#projects" class="inline-flex items-center px-6 py-3 bg-apple-blue text-white rounded-full font-medium hover:bg-blue-600 transition-colors shadow-soft">
+                    查看作品
+                    <i class="fas fa-arrow-right ml-2 text-sm"></i>
+                </a>
+                <a href="#contact" class="inline-flex items-center px-6 py-3 bg-white text-apple-dark rounded-full font-medium border border-gray-200 hover:border-gray-300 hover:shadow-soft transition-all">
+                    联系我
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="py-20 px-4 sm:px-6 lg:px-8 bg-white">
+        <div class="max-w-6xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl sm:text-4xl font-bold mb-4">关于我</h2>
+                <p class="text-gray-600 max-w-2xl mx-auto">技术背景与产品思维的结合，让我能够从更全面的视角打造用户体验</p>
+            </div>
+            
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- Card 1 -->
+                <div class="card-hover bg-apple-light rounded-2xl p-8">
+                    <div class="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center mb-6">
+                        <i class="fas fa-lightbulb text-2xl text-apple-blue"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3">产品思维</h3>
+                    <p class="text-gray-600 leading-relaxed">
+                        深入理解用户需求，从0到1构建产品方案。擅长用户研究、需求分析和产品规划。
+                    </p>
+                </div>
+                
+                <!-- Card 2 -->
+                <div class="card-hover bg-apple-light rounded-2xl p-8">
+                    <div class="w-14 h-14 bg-purple-100 rounded-2xl flex items-center justify-center mb-6">
+                        <i class="fas fa-code text-2xl text-purple-600"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3">技术实操</h3>
+                    <p class="text-gray-600 leading-relaxed">
+                        具备扎实的技术背景，能够深入理解技术实现细节，与开发团队高效协作。
+                    </p>
+                </div>
+                
+                <!-- Card 3 -->
+                <div class="card-hover bg-apple-light rounded-2xl p-8">
+                    <div class="w-14 h-14 bg-green-100 rounded-2xl flex items-center justify-center mb-6">
+                        <i class="fas fa-rocket text-2xl text-green-600"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3">项目落地</h3>
+                    <p class="text-gray-600 leading-relaxed">
+                        从概念到上线的全流程把控，注重数据驱动和迭代优化，确保项目成功交付。
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Skills -->
+            <div class="mt-16">
+                <h3 class="text-xl font-semibold text-center mb-8">专业技能</h3>
+                <div class="flex flex-wrap justify-center gap-3">
+                    <span class="skill-tag px-4 py-2 bg-gray-100 rounded-full text-sm font-medium cursor-default">产品规划</span>
+                    <span class="skill-tag px-4 py-2 bg-gray-100 rounded-full text-sm font-medium cursor-default">用户研究</span>
+                    <span class="skill-tag px-4 py-2 bg-gray-100 rounded-full text-sm font-medium cursor-default">数据分析</span>
+                    <span class="skill-tag px-4 py-2 bg-gray-100 rounded-full text-sm font-medium cursor-default">原型设计</span>
+                    <span class="skill-tag px-4 py-2 bg-gray-100 rounded-full text-sm font-medium cursor-default">项目管理</span>
+                    <span class="skill-tag px-4 py-2 bg-gray-100 rounded-full text-sm font-medium cursor-default">敏捷开发</span>
+                    <span class="skill-tag px-4 py-2 bg-gray-100 rounded-full text-sm font-medium cursor-default">技术架构</span>
+                    <span class="skill-tag px-4 py-2 bg-gray-100 rounded-full text-sm font-medium cursor-default">跨部门协作</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Projects Section -->
+    <section id="projects" class="py-20 px-4 sm:px-6 lg:px-8 bg-apple-light">
+        <div class="max-w-6xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl sm:text-4xl font-bold mb-4">作品展示</h2>
+                <p class="text-gray-600 max-w-2xl mx-auto">精选项目案例，展示产品设计与技术实现的融合</p>
+            </div>
+            
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Project 1 -->
+                <div class="project-card card-hover bg-white rounded-2xl overflow-hidden shadow-soft">
+                    <div class="aspect-video overflow-hidden">
+                        <img src="https://picsum.photos/800/450?random=2" alt="Project 1" class="w-full h-full object-cover">
+                    </div>
+                    <div class="p-6">
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="px-2 py-1 bg-blue-50 text-apple-blue text-xs font-medium rounded">产品设计</span>
+                            <span class="px-2 py-1 bg-purple-50 text-purple-600 text-xs font-medium rounded">移动端</span>
+                        </div>
+                        <h3 class="text-lg font-semibold mb-2">智能生活助手</h3>
+                        <p class="text-gray-600 text-sm leading-relaxed mb-4">
+                            一款集日程管理、健康追踪、智能家居控制于一体的综合性生活应用，服务超过50万用户。
+                        </p>
+                        <div class="flex items-center justify-between">
+                            <div class="flex -space-x-2">
+                                <div class="w-8 h-8 rounded-full bg-blue-400 flex items-center justify-center text-white text-xs">PM</div>
+                                <div class="w-8 h-8 rounded-full bg-purple-400 flex items-center justify-center text-white text-xs">UI</div>
+                            </div>
+                            <button class="text-apple-blue text-sm font-medium hover:underline">查看详情</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Project 2 -->
+                <div class="project-card card-hover bg-white rounded-2xl overflow-hidden shadow-soft">
+                    <div class="aspect-video overflow-hidden">
+                        <img src="https://picsum.photos/800/450?random=3" alt="Project 2" class="w-full h-full object-cover">
+                    </div>
+                    <div class="p-6">
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="px-2 py-1 bg-green-50 text-green-600 text-xs font-medium rounded">数据平台</span>
+                            <span class="px-2 py-1 bg-orange-50 text-orange-600 text-xs font-medium rounded">B端</span>
+                        </div>
+                        <h3 class="text-lg font-semibold mb-2">企业数据分析平台</h3>
+                        <p class="text-gray-600 text-sm leading-relaxed mb-4">
+                            为中大型企业打造的商业智能平台，提供实时数据可视化和智能决策支持功能。
+                        </p>
+                        <div class="flex items-center justify-between">
+                            <div class="flex -space-x-2">
+                                <div class="w-8 h-8 rounded-full bg-green-400 flex items-center justify-center text-white text-xs">PM</div>
+                                <div class="w-8 h-8 rounded-full bg-orange-400 flex items-center justify-center text-white text-xs">DEV</div>
+                            </div>
+                            <button class="text-apple-blue text-sm font-medium hover:underline">查看详情</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Project 3 -->
+                <div class="project-card card-hover bg-white rounded-2xl overflow-hidden shadow-soft">
+                    <div class="aspect-video overflow-hidden">
+                        <img src="https://picsum.photos/800/450?random=4" alt="Project 3" class="w-full h-full object-cover">
+                    </div>
+                    <div class="p-6">
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="px-2 py-1 bg-pink-50 text-pink-600 text-xs font-medium rounded">社交电商</span>
+                            <span class="px-2 py-1 bg-blue-50 text-apple-blue text-xs font-medium rounded">小程序</span>
+                        </div>
+                        <h3 class="text-lg font-semibold mb-2">社群电商小程序</h3>
+                        <p class="text-gray-600 text-sm leading-relaxed mb-4">
+                            基于微信生态的社交电商平台，通过社群运营和裂变营销实现快速增长。
+                        </p>
+                        <div class="flex items-center justify-between">
+                            <div class="flex -space-x-2">
+                                <div class="w-8 h-8 rounded-full bg-pink-400 flex items-center justify-center text-white text-xs">PM</div>
+                                <div class="w-8 h-8 rounded-full bg-blue-400 flex items-center justify-center text-white text-xs">UI</div>
+                            </div>
+                            <button class="text-apple-blue text-sm font-medium hover:underline">查看详情</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Project 4 -->
+                <div class="project-card card-hover bg-white rounded-2xl overflow-hidden shadow-soft">
+                    <div class="aspect-video overflow-hidden">
+                        <img src="https://picsum.photos/800/450?random=5" alt="Project 4" class="w-full h-full object-cover">
+                    </div>
+                    <div class="p-6">
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="px-2 py-1 bg-indigo-50 text-indigo-600 text-xs font-medium rounded">AI应用</span>
+                            <span class="px-2 py-1 bg-purple-50 text-purple-600 text-xs font-medium rounded">创新</span>
+                        </div>
+                        <h3 class="text-lg font-semibold mb-2">AI内容创作工具</h3>
+                        <p class="text-gray-600 text-sm leading-relaxed mb-4">
+                            利用大语言模型技术，为内容创作者提供智能写作辅助和创意激发工具。
+                        </p>
+                        <div class="flex items-center justify-between">
+                            <div class="flex -space-x-2">
+                                <div class="w-8 h-8 rounded-full bg-indigo-400 flex items-center justify-center text-white text-xs">PM</div>
+                                <div class="w-8 h-8 rounded-full bg-purple-400 flex items-center justify-center text-white text-xs">AI</div>
+                            </div>
+                            <button class="text-apple-blue text-sm font-medium hover:underline">查看详情</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Project 5 -->
+                <div class="project-card card-hover bg-white rounded-2xl overflow-hidden shadow-soft">
+                    <div class="aspect-video overflow-hidden">
+                        <img src="https://picsum.photos/800/450?random=6" alt="Project 5" class="w-full h-full object-cover">
+                    </div>
+                    <div class="p-6">
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="px-2 py-1 bg-teal-50 text-teal-600 text-xs font-medium rounded">教育科技</span>
+                            <span class="px-2 py-1 bg-blue-50 text-apple-blue text-xs font-medium rounded">Web</span>
+                        </div>
+                        <h3 class="text-lg font-semibold mb-2">在线教育平台</h3>
+                        <p class="text-gray-600 text-sm leading-relaxed mb-4">
+                            支持直播授课、互动答疑、学习进度追踪的综合性在线教育解决方案。
+                        </p>
+                        <div class="flex items-center justify-between">
+                            <div class="flex -space-x-2">
+                                <div class="w-8 h-8 rounded-full bg-teal-400 flex items-center justify-center text-white text-xs">PM</div>
+                                <div class="w-8 h-8 rounded-full bg-blue-400 flex items-center justify-center text-white text-xs">UX</div>
+                            </div>
+                            <button class="text-apple-blue text-sm font-medium hover:underline">查看详情</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Project 6 -->
+                <div class="project-card card-hover bg-white rounded-2xl overflow-hidden shadow-soft">
+                    <div class="aspect-video overflow-hidden">
+                        <img src="https://picsum.photos/800/450?random=7" alt="Project 6" class="w-full h-full object-cover">
+                    </div>
+                    <div class="p-6">
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="px-2 py-1 bg-red-50 text-red-600 text-xs font-medium rounded">金融科技</span>
+                            <span class="px-2 py-1 bg-orange-50 text-orange-600 text-xs font-medium rounded">安全</span>
+                        </div>
+                        <h3 class="text-lg font-semibold mb-2">数字钱包应用</h3>
+                        <p class="text-gray-600 text-sm leading-relaxed mb-4">
+                            安全可靠的移动支付解决方案，支持多种支付场景和智能理财功能。
+                        </p>
+                        <div class="flex items-center justify-between">
+                            <div class="flex -space-x-2">
+                                <div class="w-8 h-8 rounded-full bg-red-400 flex items-center justify-center text-white text-xs">PM</div>
+                                <div class="w-8 h-8 rounded-full bg-orange-400 flex items-center justify-center text-white text-xs">SEC</div>
+                            </div>
+                            <button class="text-apple-blue text-sm font-medium hover:underline">查看详情</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="py-20 px-4 sm:px-6 lg:px-8 bg-white">
+        <div class="max-w-4xl mx-auto text-center">
+            <h2 class="text-3xl sm:text-4xl font-bold mb-4">联系我</h2>
+            <p class="text-gray-600 mb-12">欢迎交流合作，一起创造有价值的产品</p>
+            
+            <div class="grid sm:grid-cols-2 gap-6 max-w-2xl mx-auto mb-12">
+                <!-- WeChat -->
+                <a href="#" class="social-btn group flex items-center p-6 bg-apple-light rounded-2xl hover:bg-green-50 transition-colors">
+                    <div class="w-14 h-14 bg-green-500 rounded-2xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
+                        <i class="fab fa-weixin text-2xl text-white"></i>
+                    </div>
+                    <div class="text-left">
+                        <p class="text-sm text-gray-500 mb-1">微信</p>
+                        <p class="font-semibold text-apple-dark">coolniuniusun</p>
+                    </div>
+                    <i class="fas fa-copy ml-auto text-gray-400 group-hover:text-green-500 transition-colors" onclick="copyToClipboard('coolniuniusun', event)"></i>
+                </a>
+                
+                <!-- Xiaohongshu -->
+                <a href="#" class="social-btn group flex items-center p-6 bg-apple-light rounded-2xl hover:bg-red-50 transition-colors">
+                    <div class="w-14 h-14 bg-red-500 rounded-2xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
+                        <i class="fas fa-book-open text-2xl text-white"></i>
+                    </div>
+                    <div class="text-left">
+                        <p class="text-sm text-gray-500 mb-1">小红书</p>
+                        <p class="font-semibold text-apple-dark">509418968</p>
+                    </div>
+                    <i class="fas fa-copy ml-auto text-gray-400 group-hover:text-red-500 transition-colors" onclick="copyToClipboard('509418968', event)"></i>
+                </a>
+            </div>
+            
+            <!-- Social Links -->
+            <div class="flex justify-center gap-4">
+                <a href="#" class="w-12 h-12 rounded-full bg-apple-light flex items-center justify-center text-gray-600 hover:bg-apple-blue hover:text-white transition-all">
+                    <i class="fab fa-github text-xl"></i>
+                </a>
+                <a href="#" class="w-12 h-12 rounded-full bg-apple-light flex items-center justify-center text-gray-600 hover:bg-blue-500 hover:text-white transition-all">
+                    <i class="fab fa-linkedin-in text-xl"></i>
+                </a>
+                <a href="#" class="w-12 h-12 rounded-full bg-apple-light flex items-center justify-center text-gray-600 hover:bg-sky-500 hover:text-white transition-all">
+                    <i class="fab fa-twitter text-xl"></i>
+                </a>
+                <a href="#" class="w-12 h-12 rounded-full bg-apple-light flex items-center justify-center text-gray-600 hover:bg-pink-500 hover:text-white transition-all">
+                    <i class="fas fa-envelope text-xl"></i>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-8 px-4 sm:px-6 lg:px-8 bg-apple-dark text-white">
+        <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center">
+            <div class="mb-4 sm:mb-0">
+                <span class="text-lg font-semibold">蓝鲸</span>
+                <span class="text-gray-400 ml-2 text-sm">产品经理 & 技术实操者</span>
+            </div>
+            <div class="text-gray-400 text-sm">
+                © 2024 蓝鲸. All rights reserved.
+            </div>
+        </div>
+    </footer>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-8 left-1/2 transform -translate-x-1/2 bg-apple-dark text-white px-6 py-3 rounded-full shadow-lg opacity-0 pointer-events-none transition-opacity duration-300 z-50">
+        已复制到剪贴板
+    </div>
+
+    <script>
+        // Mobile Menu Toggle
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        
+        mobileMenuBtn.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+        
+        // Close mobile menu when clicking a link
+        mobileMenu.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => {
+                mobileMenu.classList.add('hidden');
+            });
+        });
+        
+        // Copy to Clipboard
+        function copyToClipboard(text, event) {
+            event.preventDefault();
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('已复制到剪贴板');
+            });
+        }
+        
+        // Show Toast
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.remove('opacity-0', 'pointer-events-none');
+            toast.classList.add('opacity-100');
+            
+            setTimeout(() => {
+                toast.classList.remove('opacity-100');
+                toast.classList.add('opacity-0', 'pointer-events-none');
+            }, 2000);
+        }
+        
+        // Smooth Scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+        
+        // Add scroll effect to navbar
+        let lastScroll = 0;
+        window.addEventListener('scroll', () => {
+            const nav = document.querySelector('nav');
+            const currentScroll = window.pageYOffset;
+            
+            if (currentScroll > 100) {
+                nav.classList.add('shadow-sm');
+            } else {
+                nav.classList.remove('shadow-sm');
+            }
+            
+            lastScroll = currentScroll;
+        });
+    </script>
+</body>
+</html>
