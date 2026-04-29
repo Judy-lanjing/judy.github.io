@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Excel 行列转置工具</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif; }
+        .checkbox-group { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.5rem; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen pb-12">
+    <div class="max-w-5xl mx-auto px-4 py-8">
+        <header class="mb-8 text-center">
+            <h1 class="text-3xl font-bold text-slate-800">Excel 行列转置工具</h1>
+            <p class="text-slate-500 mt-2">上传 Excel 文件，自定义固定列与转置列，自动生成汇总核对</p>
+        </header>
+
+        <!-- 步骤 1: 上传文件 -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
+            <h2 class="text-lg font-semibold text-slate-700 mb-4 flex items-center">
+                <span class="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mr-2 text-sm">1</span>
+                上传 Excel 文件
+            </h2>
+            <div class="flex items-center justify-center w-full relative">
+                <label for="file-upload" class="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-300 border-dashed rounded-lg cursor-pointer bg-slate-50 hover:bg-slate-100 transition-colors">
+                    <div id="upload-prompt" class="flex flex-col items-center justify-center pt-5 pb-6">
+                        <svg class="w-8 h-8 mb-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                        <p class="mb-2 text-sm text-slate-500 font-semibold">点击上传或拖拽文件</p>
+                        <p class="text-xs text-slate-400">支持 .xlsx, .xls, .csv</p>
+                    </div>
+                    <div id="loading-spinner" class="hidden flex flex-col items-center justify-center pt-5 pb-6">
+                        <svg class="animate-spin h-8 w-8 text-blue-600 mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <p class="text-sm text-blue-600 font-medium">正在读取并解析文件...</p>
+                    </div>
+                    <input id="file-upload" type="file" class="hidden" accept=".xlsx, .xls, .csv" />
+                </label>
+            </div>
+            <div class="mt-4 flex justify-center">
+                <button id="test-data-btn" class="text-xs text-blue-500 hover:text-blue-700 underline">没有文件？点击使用模拟数据测试</button>
+            </div>
+            <div id="file-info" class="mt-4 hidden">
+                <p class="text-sm text-blue-600 font-medium flex items-center">
+                    <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"></path></svg>
+                    <span id="filename"></span>
+                </p>
+            </div>
+        </div>
+
+        <!-- 步骤 2: 配置列 -->
+        <div id="config-section" class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6 hidden">
+            <h2 class="text-lg font-semibold text-slate-700 mb-4 flex items-center">
+                <span class="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mr-2 text-sm">2</span>
+                配置转换规则
+            </h2>
+            
+            <div class="space-y-6">
+                <div>
+                    <label class="block text-sm font-medium text-slate-600 mb-2">1. 勾选固定列 (这些列将保持原样)</label>
+                    <div id="fixed-columns" class="checkbox-group p-4 bg-slate-50 rounded-lg border border-slate-200">
+                        <!-- 动态生成 -->
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-slate-600 mb-2">2. 勾选需要转置的列 (这些列的表头将变为“费用类别”)</label>
+                    <div id="transpose-columns" class="checkbox-group p-4 bg-slate-50 rounded-lg border border-slate-200">
+                        <!-- 动态生成 -->
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-4">
+                    <button id="process-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors shadow-sm">
+                        开始转换
+                    </button>
+                    <p class="text-xs text-slate-400 italic">* 转换将自动过滤金额为 0 或为空的行</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 步骤 3: 结果预览与汇总 -->
+        <div id="result-section" class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6 hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-lg font-semibold text-slate-700 flex items-center">
+                    <span class="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mr-2 text-sm">3</span>
+                    数据转换结果与核对
+                </h2>
+                <button id="download-btn" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-lg font-medium transition-colors shadow-sm flex items-center">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    下载 Excel
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- 总汇总 -->
+                <div class="bg-slate-50 rounded-lg p-4 border border-slate-200">
+                    <h3 class="text-sm font-bold text-slate-700 mb-3 uppercase tracking-wider">总汇总核对</h3>
+                    <div class="space-y-2">
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">原文件总金额:</span>
+                            <span id="original-total" class="font-mono font-semibold">0.00</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">转换后总金额:</span>
+                            <span id="converted-total" class="font-mono font-semibold">0.00</span>
+                        </div>
+                        <div class="pt-2 border-t border-slate-200 flex justify-between">
+                            <span class="text-slate-500">差异:</span>
+                            <span id="total-diff" class="font-mono font-semibold">0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 费用类别汇总 -->
+                <div class="bg-slate-50 rounded-lg p-4 border border-slate-200">
+                    <h3 class="text-sm font-bold text-slate-700 mb-3 uppercase tracking-wider">费用类别汇总</h3>
+                    <div id="category-summary" class="max-h-48 overflow-y-auto space-y-1 text-sm">
+                        <!-- 动态生成 -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-8">
+                <h3 class="text-sm font-bold text-slate-700 mb-3 uppercase tracking-wider">预览 (前 10 行)</h3>
+                <div class="overflow-x-auto border border-slate-200 rounded-lg">
+                    <table id="preview-table" class="min-w-full divide-y divide-slate-200 text-sm">
+                        <thead class="bg-slate-50">
+                            <tr id="preview-header"></tr>
+                        </thead>
+                        <tbody id="preview-body" class="divide-y divide-slate-200 bg-white">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let originalData = [];
+        let headers = [];
+        let processedData = [];
+
+        const fileInput = document.getElementById('file-upload');
+        const fileInfo = document.getElementById('file-info');
+        const filenameSpan = document.getElementById('filename');
+        const configSection = document.getElementById('config-section');
+        const resultSection = document.getElementById('result-section');
+        const fixedColsDiv = document.getElementById('fixed-columns');
+        const transposeColsDiv = document.getElementById('transpose-columns');
+        const processBtn = document.getElementById('process-btn');
+        const downloadBtn = document.getElementById('download-btn');
+        const uploadPrompt = document.getElementById('upload-prompt');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const testDataBtn = document.getElementById('test-data-btn');
+
+        // 模拟数据测试
+        testDataBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            console.log("加载模拟数据...");
+            const sampleData = [
+                { "订单号": "ORD001", "供应商": "供应商A", "结算日期": "2024-01-01", "租金": 1000, "物业费": 200, "电费": 0, "水费": "" },
+                { "订单号": "ORD002", "供应商": "供应商B", "结算日期": "2024-01-02", "租金": 1500, "物业费": 300, "电费": 50, "水费": 10 }
+            ];
+            originalData = sampleData;
+            headers = Object.keys(sampleData[0]);
+            filenameSpan.textContent = "模拟测试数据.xlsx";
+            fileInfo.classList.remove('hidden');
+            renderColumnSelection();
+            configSection.classList.remove('hidden');
+            resultSection.classList.add('hidden');
+            configSection.scrollIntoView({ behavior: 'smooth' });
+        });
+
+        // 文件上传处理
+        fileInput.addEventListener('change', (e) => {
+            e.stopPropagation();
+            const file = e.target.files[0];
+            if (!file) return;
+
+            console.log("正在读取文件:", file.name);
+            filenameSpan.textContent = file.name;
+            fileInfo.classList.remove('hidden');
+            
+            // 显示加载状态
+            uploadPrompt.classList.add('hidden');
+            loadingSpinner.classList.remove('hidden');
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const data = new Uint8Array(event.target.result);
+                    const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+                    
+                    if (!workbook.SheetNames.length) {
+                        throw new Error("Excel 文件中没有工作表");
+                    }
+
+                    const firstSheetName = workbook.SheetNames[0];
+                    const firstSheet = workbook.Sheets[firstSheetName];
+                    
+                    // 读取原始数据
+                    originalData = XLSX.utils.sheet_to_json(firstSheet, { defval: "" });
+                    console.log("解析到的数据行数:", originalData.length);
+
+                    if (originalData.length > 0) {
+                        headers = Object.keys(originalData[0]);
+                        console.log("解析到的表头:", headers);
+                        
+                        renderColumnSelection();
+                        configSection.classList.remove('hidden');
+                        resultSection.classList.add('hidden');
+                        
+                        // 滚动到配置区域
+                        configSection.scrollIntoView({ behavior: 'smooth' });
+                    } else {
+                        alert("该工作表似乎是空的，请检查文件内容。");
+                    }
+                } catch (err) {
+                    console.error("读取 Excel 出错:", err);
+                    alert("读取 Excel 文件失败，请确保文件格式正确。错误详情: " + err.message);
+                } finally {
+                    // 恢复上传按钮状态
+                    uploadPrompt.classList.remove('hidden');
+                    loadingSpinner.classList.add('hidden');
+                    // 清除 input 值，允许重复上传同一文件
+                    fileInput.value = '';
+                }
+            };
+            reader.onerror = (err) => {
+                console.error("文件读取器出错:", err);
+                alert("文件读取失败");
+            };
+            reader.readAsArrayBuffer(file);
+        });
+
+        // 渲染列选择
+        function renderColumnSelection() {
+            fixedColsDiv.innerHTML = '';
+            transposeColsDiv.innerHTML = '';
+
+            headers.forEach((header, index) => {
+                // 固定列
+                const fixedLabel = createCheckbox(header, 'fixed', index);
+                fixedColsDiv.appendChild(fixedLabel);
+
+                // 转置列
+                const transposeLabel = createCheckbox(header, 'transpose', index);
+                transposeColsDiv.appendChild(transposeLabel);
+            });
+        }
+
+        function createCheckbox(name, group, index) {
+            const label = document.createElement('label');
+            label.className = 'flex items-center space-x-2 cursor-pointer hover:bg-white p-1 rounded transition-colors';
+            
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.className = `form-checkbox h-4 w-4 text-blue-600 rounded border-slate-300 ${group}-check`;
+            checkbox.value = name;
+            
+            // 防止重复选择
+            checkbox.addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    const otherGroup = group === 'fixed' ? 'transpose' : 'fixed';
+                    const otherCheckboxes = document.querySelectorAll(`.${otherGroup}-check`);
+                    otherCheckboxes.forEach(cb => {
+                        if (cb.value === name) {
+                            cb.checked = false;
+                        }
+                    });
+                }
+            });
+            
+            const span = document.createElement('span');
+            span.className = 'text-sm text-slate-600 truncate max-w-[120px]';
+            span.textContent = name;
+            span.title = name;
+
+            label.appendChild(checkbox);
+            label.appendChild(span);
+            return label;
+        }
+
+        // 处理逻辑
+        processBtn.addEventListener('click', () => {
+            const selectedFixed = Array.from(document.querySelectorAll('.fixed-check:checked')).map(cb => cb.value);
+            const selectedTranspose = Array.from(document.querySelectorAll('.transpose-check:checked')).map(cb => cb.value);
+
+            if (selectedTranspose.length === 0) {
+                alert('请至少选择一个转置列');
+                return;
+            }
+
+            processedData = [];
+            let totalOriginal = 0;
+            let totalConverted = 0;
+            const catSummaryMap = {};
+
+            // 1. 计算原始总金额 (仅针对选中的转置列)
+            originalData.forEach(row => {
+                selectedTranspose.forEach(col => {
+                    const val = parseFloat(row[col]) || 0;
+                    totalOriginal += val;
+                });
+            });
+
+            // 2. 执行转置逻辑
+            originalData.forEach(row => {
+                selectedTranspose.forEach(col => {
+                    const value = row[col];
+                    const numValue = parseFloat(value);
+                    
+                    // 过滤 0 或 空
+                    if (value !== "" && value !== null && value !== undefined && numValue !== 0) {
+                        const newRow = {};
+                        
+                        // 填充固定列
+                        selectedFixed.forEach(fCol => {
+                            let val = row[fCol];
+                            
+                            // 结算日期处理 (假设包含 "日期" 或 "Date" 关键字)
+                            if (fCol.includes('日期') || fCol.includes('Date')) {
+                                val = formatUATDate(val);
+                            }
+                            
+                            newRow[fCol] = val;
+                        });
+
+                        // 增加费用类别和金额
+                        newRow['费用类别'] = col;
+                        newRow['金额'] = numValue;
+
+                        processedData.push(newRow);
+                        
+                        // 统计汇总
+                        totalConverted += numValue;
+                        catSummaryMap[col] = (catSummaryMap[col] || 0) + numValue;
+                    }
+                });
+            });
+
+            renderResults(totalOriginal, totalConverted, catSummaryMap);
+        });
+
+        // 日期格式化 (UAT时区/统一格式)
+        function formatUATDate(val) {
+            if (!val) return "";
+            try {
+                const date = new Date(val);
+                if (isNaN(date.getTime())) return val;
+                
+                // 统一为 YYYY-MM-DD 格式 (UTC)
+                const y = date.getUTCFullYear();
+                const m = String(date.getUTCMonth() + 1).padStart(2, '0');
+                const d = String(date.getUTCDate()).padStart(2, '0');
+                return `${y}-${m}-${d}`;
+            } catch (e) {
+                return val;
+            }
+        }
+
+        // 渲染结果
+        function renderResults(totalOrig, totalConv, catMap) {
+            resultSection.classList.remove('hidden');
+            
+            // 汇总数字
+            document.getElementById('original-total').textContent = totalOrig.toLocaleString(undefined, {minimumFractionDigits: 2});
+            document.getElementById('converted-total').textContent = totalConv.toLocaleString(undefined, {minimumFractionDigits: 2});
+            const diff = totalOrig - totalConv;
+            document.getElementById('total-diff').textContent = diff.toLocaleString(undefined, {minimumFractionDigits: 2});
+            document.getElementById('total-diff').className = Math.abs(diff) < 0.01 ? 'font-mono font-semibold text-emerald-600' : 'font-mono font-semibold text-red-600';
+
+            // 费用类别汇总
+            const catSummaryDiv = document.getElementById('category-summary');
+            catSummaryDiv.innerHTML = '';
+            Object.entries(catMap).sort((a,b) => b[1] - a[1]).forEach(([cat, amt]) => {
+                const div = document.createElement('div');
+                div.className = 'flex justify-between border-b border-slate-100 pb-1';
+                div.innerHTML = `<span class="text-slate-600">${cat}</span><span class="font-mono">${amt.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>`;
+                catSummaryDiv.appendChild(div);
+            });
+
+            // 预览表格
+            const headerRow = document.getElementById('preview-header');
+            const body = document.getElementById('preview-body');
+            headerRow.innerHTML = '';
+            body.innerHTML = '';
+
+            if (processedData.length > 0) {
+                const resHeaders = Object.keys(processedData[0]);
+                resHeaders.forEach(h => {
+                    const th = document.createElement('th');
+                    th.className = 'px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider';
+                    th.textContent = h;
+                    headerRow.appendChild(th);
+                });
+
+                processedData.slice(0, 10).forEach(row => {
+                    const tr = document.createElement('tr');
+                    resHeaders.forEach(h => {
+                        const td = document.createElement('td');
+                        td.className = 'px-4 py-2 whitespace-nowrap text-slate-600';
+                        td.textContent = row[h];
+                        tr.appendChild(td);
+                    });
+                    body.appendChild(tr);
+                });
+            }
+        }
+
+        // 下载功能
+        downloadBtn.addEventListener('click', () => {
+            if (processedData.length === 0) return;
+            
+            const ws = XLSX.utils.json_to_sheet(processedData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Transposed Data");
+            
+            // 生成文件名
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+            XLSX.writeFile(wb, `转置结果_${timestamp}.xlsx`);
+        });
+    </script>
+</body>
+</html>
