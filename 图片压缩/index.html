@@ -324,7 +324,8 @@
             
             let completedCount = filesToProcess.length - pendingFiles.length;
             const total = filesToProcess.length;
-            const CONCURRENCY = 3;
+            // 提高并发数，利用多核性能
+            const CONCURRENCY = Math.min(navigator.hardwareConcurrency || 4, 6);
 
             const queue = [...pendingFiles];
             const workers = [];
@@ -333,20 +334,32 @@
                 updateItemStatus(fileData.id, 'processing', '处理中');
                 
                 try {
-                    const options = {
-                        maxSizeMB: targetSizeKB / 1024,
-                        maxWidthOrHeight: 2500,
-                        useWebWorker: true,
-                        initialQuality: 0.8,
-                    };
+                    const targetSizeBytes = targetSizeKB * 1024;
+                    
+                    // 优化：如果原图已经小于目标大小，且不需要调整尺寸，则直接跳过压缩
+                    if (fileData.originalSize <= targetSizeBytes) {
+                        fileData.status = 'success';
+                        fileData.compressedBlob = fileData.file;
+                        fileData.compressedSize = fileData.originalSize;
+                        updateItemSuccess(fileData, true); // 传入 true 表示跳过压缩
+                    } else {
+                        const options = {
+                            maxSizeMB: targetSizeKB / 1024,
+                            maxWidthOrHeight: 2500,
+                            useWebWorker: true,
+                            initialQuality: 0.8,
+                            // 增加最大迭代次数的限制，防止在边缘情况耗时过久
+                            maxIteration: 6,
+                        };
 
-                    const compressedBlob = await imageCompression(fileData.file, options);
-                    
-                    fileData.status = 'success';
-                    fileData.compressedBlob = compressedBlob;
-                    fileData.compressedSize = compressedBlob.size;
-                    
-                    updateItemSuccess(fileData);
+                        const compressedBlob = await imageCompression(fileData.file, options);
+                        
+                        fileData.status = 'success';
+                        fileData.compressedBlob = compressedBlob;
+                        fileData.compressedSize = compressedBlob.size;
+                        
+                        updateItemSuccess(fileData);
+                    }
                 } catch (error) {
                     fileData.status = 'error';
                     updateItemStatus(fileData.id, 'error', '失败');
@@ -383,21 +396,26 @@
             }`;
         }
 
-        function updateItemSuccess(fileData) {
+        function updateItemSuccess(fileData, isSkipped = false) {
             const id = fileData.id;
             const statusEl = document.getElementById(`status-${id}`);
             if (statusEl) {
-                statusEl.textContent = '完成';
-                statusEl.className = 'text-[10px] font-bold px-1.5 py-0.5 rounded uppercase bg-green-100 text-green-600';
+                statusEl.textContent = isSkipped ? '无需压缩' : '完成';
+                statusEl.className = `text-[10px] font-bold px-1.5 py-0.5 rounded uppercase ${isSkipped ? 'bg-blue-50 text-blue-400' : 'bg-green-100 text-green-600'}`;
             }
 
             const infoEl = document.getElementById(`compressed-info-${id}`);
             const sizeKB = (fileData.compressedSize / 1024).toFixed(1);
-            const ratio = Math.round((1 - fileData.compressedSize / fileData.originalSize) * 100);
             
             infoEl.classList.remove('hidden');
             infoEl.querySelector('.text-blue-600').textContent = `${sizeKB} KB`;
-            infoEl.querySelector('.text-green-500').textContent = `(-${ratio}%)`;
+            
+            if (isSkipped) {
+                infoEl.querySelector('.text-green-500').textContent = '(保持原样)';
+            } else {
+                const ratio = Math.round((1 - fileData.compressedSize / fileData.originalSize) * 100);
+                infoEl.querySelector('.text-green-500').textContent = `(-${ratio}%)`;
+            }
 
             // 恢复单张下载按钮
             const singleDownloadBtn = document.getElementById(`download-single-${id}`);
