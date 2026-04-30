@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF压缩工具</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            overflow: hidden;
+        }
+        .container {
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 50px 80px;
+            max-width: 1400px;
+            width: 100%;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+        h1 {
+            text-align: center;
+            color: #3b82f6;
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #6b7280;
+            font-size: 14px;
+            margin-bottom: 32px;
+        }
+        
+        .upload-box {
+            border: 2px dashed #93c5fd;
+            border-radius: 16px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: #ffffff;
+            user-select: none;
+        }
+        .upload-box:hover {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+        .upload-box.dragover {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+        
+        .upload-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+        }
+        
+        .upload-title {
+            color: #1f2937;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+        
+        .upload-actions {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .upload-btn {
+            color: #3b82f6;
+            font-size: 14px;
+            text-decoration: none;
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+        
+        .upload-btn:hover {
+            background: #eff6ff;
+        }
+        
+        .upload-divider {
+            color: #d1d5db;
+            font-size: 14px;
+        }
+        
+        #fileInput { display: none; }
+        
+        .progress-wrapper { margin-top: 24px; display: none; }
+        .progress-bar {
+            height: 4px;
+            background: #e5e7eb;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #60a5fa);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            font-size: 13px;
+            color: #6b7280;
+        }
+        
+        .result-wrapper { margin-top: 24px; display: none; }
+        .result-card {
+            background: #f9fafb;
+            border-radius: 12px;
+            padding: 20px;
+        }
+        .result-header { display: flex; align-items: center; justify-content: center; margin-bottom: 16px; }
+        .result-icon { font-size: 24px; margin-right: 8px; }
+        .result-title { color: #1f2937; font-size: 16px; font-weight: 600; }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .stat-item {
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #e5e7eb;
+        }
+        .stat-label { display: block; font-size: 12px; color: #9ca3af; margin-bottom: 4px; }
+        .stat-value { font-size: 16px; font-weight: 600; color: #1f2937; }
+        .stat-value.small { color: #10b981; }
+        .ratio-text {
+            display: block;
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+        
+        .download-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #3b82f6, #60a5fa);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-top: 16px;
+            transition: all 0.2s ease;
+        }
+        .download-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+        
+        .error-box {
+            background: #fef2f2;
+            color: #dc2626;
+            padding: 12px 14px;
+            border-radius: 8px;
+            margin-top: 16px;
+            font-size: 13px;
+            display: none;
+            border: 1px solid #fee2e2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>PDF压缩</h1>
+        <p class="subtitle">自动压缩至10MB以内，拖入即刻开始。小于10MB的文件将保持原样</p>
+
+        <div class="upload-box" id="uploadBox">
+            <div class="upload-icon">📤</div>
+            <div class="upload-title">拖入PDF文件</div>
+            <div class="upload-actions">
+                <span class="upload-btn" id="selectFileBtn">选择文件</span>
+            </div>
+        </div>
+        <input type="file" id="fileInput" accept="application/pdf">
+
+        <div class="progress-wrapper" id="progressWrapper">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-info">
+                <span id="progressText">准备压缩...</span>
+                <span id="progressPercent">0%</span>
+            </div>
+        </div>
+
+        <div class="result-wrapper" id="resultWrapper">
+            <div class="result-card">
+                <div class="result-header">
+                    <span class="result-icon">✅</span>
+                    <span class="result-title">压缩完成</span>
+                </div>
+                <div class="stats">
+                    <div class="stat-item">
+                        <span class="stat-label">原文件</span>
+                        <span class="stat-value" id="originalSize">-</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">压缩后</span>
+                        <span class="stat-value small" id="compressedSize">-</span>
+                        <span class="ratio-text" id="compressionRatio">-</span>
+                    </div>
+                </div>
+            </div>
+            <button class="download-btn" id="downloadBtn">下载文件</button>
+        </div>
+
+        <div class="error-box" id="errorBox"></div>
+    </div>
+
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <script src="https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const uploadBox = document.getElementById('uploadBox');
+        const selectFileBtn = document.getElementById('selectFileBtn');
+        const progressWrapper = document.getElementById('progressWrapper');
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+        const progressPercent = document.getElementById('progressPercent');
+        const resultWrapper = document.getElementById('resultWrapper');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const errorBox = document.getElementById('errorBox');
+        const originalSizeEl = document.getElementById('originalSize');
+        const compressedSizeEl = document.getElementById('compressedSize');
+        const compressionRatioEl = document.getElementById('compressionRatio');
+
+        let compressedPdfBytes = null;
+        let originalFileName = '';
+
+        uploadBox.addEventListener('dragover', (e) => { e.preventDefault(); uploadBox.classList.add('dragover'); });
+        uploadBox.addEventListener('dragleave', () => uploadBox.classList.remove('dragover'));
+        uploadBox.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadBox.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                const pdfFiles = Array.from(files).filter(f => f.name.toLowerCase().endsWith('.pdf'));
+                if (pdfFiles.length > 0) processFile(pdfFiles[0]);
+            }
+        });
+
+        let isProcessing = false;
+        
+        uploadBox.addEventListener('click', () => {
+            if (isProcessing) return;
+            fileInput.value = '';
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (isProcessing || !e.target.files.length) return;
+            processFile(e.target.files[0]);
+        });
+
+        downloadBtn.addEventListener('click', () => {
+            if (compressedPdfBytes) downloadFile(compressedPdfBytes, originalFileName);
+        });
+
+        async function processFile(file) {
+            if (isProcessing) return;
+            isProcessing = true;
+            
+            hideError();
+            
+            if (!file.name.toLowerCase().endsWith('.pdf')) {
+                showError('请选择PDF格式文件');
+                isProcessing = false;
+                return;
+            }
+            if (file.size > 50 * 1024 * 1024) {
+                showError('文件大小不能超过50MB');
+                isProcessing = false;
+                return;
+            }
+
+            originalFileName = file.name;
+            showProgress();
+            hideResult();
+
+            try {
+                const fileBuffer = await readFileAsArrayBuffer(file);
+                
+                if (file.size <= 10 * 1024 * 1024) {
+                    updateProgress('文件已小于10MB，无需压缩', 100);
+                    compressedPdfBytes = fileBuffer;
+                    showResult(file.size, file.size, true);
+                    isProcessing = false;
+                    return;
+                }
+                
+                const compressedBytes = await compressPdfWithRendering(fileBuffer, 10 * 1024 * 1024);
+                
+                if (compressedBytes.length >= file.size) {
+                    updateProgress('文件已压缩，使用原文件', 100);
+                    compressedPdfBytes = fileBuffer;
+                    showResult(file.size, file.size, true);
+                } else {
+                    compressedPdfBytes = compressedBytes;
+                    showResult(file.size, compressedBytes.length, false);
+                }
+                
+            } catch (error) {
+                console.error('压缩失败:', error);
+                showError('压缩失败: ' + error.message);
+                hideProgress();
+            } finally {
+                isProcessing = false;
+            }
+        }
+
+        function readFileAsArrayBuffer(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = () => reject(new Error('文件读取失败'));
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        async function compressPdfWithRendering(pdfBytes, targetSize) {
+            const { PDFDocument } = PDFLib;
+            
+            const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(pdfBytes) });
+            const pdf = await loadingTask.promise;
+            const numPages = pdf.numPages;
+            
+            const newPdf = await PDFDocument.create();
+            
+            for (let i = 1; i <= numPages; i++) {
+                updateProgress(`处理第 ${i}/${numPages} 页...`, Math.round(10 + (i / numPages) * 70));
+                
+                const page = await pdf.getPage(i);
+                const viewport = page.getViewport({ scale: 1.5 });
+                
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
+                
+                await page.render({
+                    canvasContext: ctx,
+                    viewport: viewport
+                }).promise;
+                
+                let quality = 0.9;
+                let attempts = 0;
+                let imageData = null;
+                
+                while (!imageData && attempts < 5) {
+                    try {
+                        const blob = await new Promise((resolve) => {
+                            canvas.toBlob(resolve, 'image/jpeg', quality);
+                        });
+                        imageData = await blob.arrayBuffer();
+                    } catch (e) {
+                        quality -= 0.15;
+                        attempts++;
+                    }
+                }
+                
+                if (!imageData) continue;
+                
+                let jpegImage;
+                if (typeof newPdf.embedJpeg === 'function') {
+                    jpegImage = await newPdf.embedJpeg(imageData);
+                } else if (typeof newPdf.embedJpg === 'function') {
+                    jpegImage = await newPdf.embedJpg(imageData);
+                } else {
+                    throw new Error('不支持的图片嵌入方法');
+                }
+                
+                const newPage = newPdf.addPage([viewport.width, viewport.height]);
+                newPage.drawImage(jpegImage, {
+                    x: 0,
+                    y: 0,
+                    width: viewport.width,
+                    height: viewport.height
+                });
+            }
+            
+            updateProgress('生成压缩文件...', 90);
+            
+            const resultBytes = await newPdf.save({ useObjectStreams: true, compress: true });
+            
+            if (resultBytes.length > targetSize) {
+                updateProgress('文件仍过大，重新压缩...', 85);
+                return await compressPdfWithRendering(pdfBytes, targetSize);
+            }
+            
+            updateProgress('压缩完成', 100);
+            return resultBytes;
+        }
+
+        function showResult(originalSize, compressedSize, noCompression = false) {
+            originalSizeEl.textContent = formatSize(originalSize);
+            compressedSizeEl.textContent = formatSize(compressedSize);
+            
+            if (noCompression) {
+                compressionRatioEl.textContent = '无需压缩';
+            } else {
+                const ratio = ((1 - compressedSize / originalSize) * 100).toFixed(1);
+                compressionRatioEl.textContent = '压缩率 ' + ratio + '%';
+            }
+            
+            setTimeout(() => { hideProgress(); resultWrapper.style.display = 'block'; }, 300);
+        }
+
+        function showProgress() { progressWrapper.style.display = 'block'; progressFill.style.width = '0%'; }
+        function hideProgress() { progressWrapper.style.display = 'none'; }
+        function hideResult() { resultWrapper.style.display = 'none'; }
+        function showError(message) { errorBox.textContent = message; errorBox.style.display = 'block'; }
+        function hideError() { errorBox.style.display = 'none'; }
+
+        function updateProgress(text, percent) {
+            progressText.textContent = text;
+            progressPercent.textContent = Math.round(percent) + '%';
+            progressFill.style.width = percent + '%';
+        }
+
+        function formatSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+        }
+
+        function downloadFile(bytes, originalName) {
+            const blob = new Blob([bytes], { type: 'application/pdf' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = originalName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
