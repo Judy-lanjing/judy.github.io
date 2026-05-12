@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FBM/FBA总库存 Demo - 含采购数量</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+      background: #f5f7fb;
+      color: #1f2937;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #2563eb, #7c3aed);
+      color: #fff;
+      padding: 20px 28px;
+      box-shadow: 0 4px 16px rgba(0,0,0,.12);
+    }
+    .header h1 { margin: 0; font-size: 24px; }
+    .header p { margin: 8px 0 0; opacity: .9; font-size: 13px; }
+
+    .container { padding: 20px 24px 30px; }
+
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 6px 24px rgba(15, 23, 42, .08);
+      padding: 18px;
+      margin-bottom: 18px;
+    }
+
+    .card h2 {
+      margin: 0 0 14px;
+      font-size: 18px;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+
+    .input, .select, .btn {
+      border-radius: 10px;
+      border: 1px solid #d1d5db;
+      padding: 10px 12px;
+      font-size: 14px;
+      background: #fff;
+    }
+    .btn {
+      background: #2563eb;
+      color: #fff;
+      cursor: pointer;
+      border: none;
+    }
+    .btn.secondary { background: #6b7280; }
+    .btn.success { background: #16a34a; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      background: #fff;
+    }
+
+    th, td {
+      padding: 12px 10px;
+      border-bottom: 1px solid #e5e7eb;
+      text-align: left;
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+
+    th {
+      background: #f9fafb;
+      color: #374151;
+      font-weight: 600;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    tbody tr:hover { background: #f8fafc; }
+
+    .num-link {
+      cursor: pointer;
+      color: #2563eb;
+      font-weight: 600;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+    .num-link:hover { color: #1d4ed8; }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      line-height: 1;
+      white-space: nowrap;
+    }
+    .blue { background: #dbeafe; color: #1d4ed8; }
+    .green { background: #dcfce7; color: #15803d; }
+    .yellow { background: #fef3c7; color: #b45309; }
+    .red { background: #fee2e2; color: #b91c1c; }
+    .gray { background: #e5e7eb; color: #374151; }
+    .purple { background: #ede9fe; color: #7c3aed; }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .side-panel {
+      position: sticky;
+      top: 16px;
+    }
+
+    .panel-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .panel-title h3 {
+      margin: 0;
+      font-size: 16px;
+    }
+
+    .panel-meta {
+      font-size: 13px;
+      color: #6b7280;
+      margin-bottom: 12px;
+      line-height: 1.7;
+    }
+
+    .flow-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 680px;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    .flow-item {
+      background: #f8fafc;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 12px;
+    }
+
+    .flow-item .top {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 13px;
+      margin-bottom: 6px;
+    }
+
+    .flow-item .doc {
+      font-weight: 700;
+      color: #111827;
+    }
+
+    .flow-item .time {
+      color: #6b7280;
+      white-space: nowrap;
+    }
+
+    .flow-item .desc {
+      font-size: 13px;
+      line-height: 1.6;
+      color: #374151;
+    }
+
+    .flow-item .delta {
+      margin-top: 8px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .delta.plus { color: #15803d; }
+    .delta.minus { color: #b91c1c; }
+
+    .empty {
+      background: #f9fafb;
+      border: 1px dashed #d1d5db;
+      border-radius: 12px;
+      padding: 18px;
+      color: #6b7280;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .kpi {
+      background: #f8fafc;
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      padding: 14px;
+    }
+    .kpi .label { font-size: 13px; color: #6b7280; }
+    .kpi .value { font-size: 24px; font-weight: 700; margin-top: 8px; }
+    .kpi .hint { font-size: 12px; color: #9ca3af; margin-top: 6px; }
+
+    .hint-line {
+      margin-top: 8px;
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    @media (max-width: 1200px) {
+      .layout { grid-template-columns: 1fr; }
+      .side-panel { position: relative; top: 0; }
+      .summary { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 768px) {
+      th, td { font-size: 12px; padding: 10px 8px; }
+      .summary { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>FBM / FBA 总库存</h1>
+    <p>支持配送方式筛选 | 采购数量不计入总库存 | 点击库存数字查看流水</p>
+  </div>
+
+  <div class="container">
+    <div class="card">
+      <h2>筛选条件</h2>
+      <div class="toolbar">
+        <select class="select" id="deliveryFilter" onchange="renderTable()">
+          <option value="ALL">配送方式：全部</option>
+          <option value="FBM">FBM</option>
+          <option value="FBA">FBA</option>
+        </select>
+
+        <select class="select" id="storeFilter" onchange="renderTable()">
+          <option value="ALL">店铺：全部</option>
+          <option value="Agilestic">Agilestic</option>
+          <option value="Mericonia">Mericonia</option>
+          <option value="Klicelor">Klicelor</option>
+          <option value="Scoctcoc">Scoctcoc</option>
+          <option value="Walmart-M">Walmart-M</option>
+          <option value="TikTok!-美国">TikTok!-美国</option>
+          <option value="Wayfair-A店铺">Wayfair-A店铺</option>
+          <option value="Wayfair-M店铺">Wayfair-M店铺</option>
+        </select>
+
+        <select class="select" id="countryFilter" onchange="renderTable()">
+          <option value="ALL">国家：全部</option>
+          <option value="美国">美国</option>
+          <option value="德国">德国</option>
+          <option value="英国">英国</option>
+          <option value="加拿大">加拿大</option>
+          <option value="中国">中国</option>
+        </select>
+
+        <input class="input" id="keywordFilter" placeholder="搜索 MSKU / EPRSKU" oninput="renderTable()" />
+        <button class="btn secondary" onclick="resetFilters()">重置</button>
+        <button class="btn success">导出</button>
+      </div>
+      <div class="hint-line">
+        注：<b>采购数量</b>为采购计划/采购中数量，仅做前置管理展示，不计入总库存。
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="summary">
+        <div class="kpi">
+          <div class="label">总记录数</div>
+          <div class="value" id="kpiTotal">0</div>
+          <div class="hint">当前筛选结果</div>
+        </div>
+        <div class="kpi">
+          <div class="label">采购数量合计</div>
+          <div class="value" id="kpiPurchase">0</div>
+          <div class="hint">不计入总库存</div>
+        </div>
+        <div class="kpi">
+          <div class="label">FBM合计总库存</div>
+          <div class="value" id="kpiFBM">0</div>
+          <div class="hint">仅统计 FBM</div>
+        </div>
+        <div class="kpi">
+          <div class="label">FBA合计总库存</div>
+          <div class="value" id="kpiFBA">0</div>
+          <div class="hint">仅统计 FBA</div>
+        </div>
+        <div class="kpi">
+          <div class="label">异常项</div>
+          <div class="value" style="color:#dc2626;" id="kpiAbnormal">0</div>
+          <div class="hint">库存差异或缺失</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="layout">
+      <div class="card">
+        <h2>库存总表</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>配送方式</th>
+              <th>店铺</th>
+              <th>国家</th>
+              <th>MSKU</th>
+              <th>最新EPRSKU</th>
+              <th>采购数量</th>
+              <th>总库存</th>
+              <th>已排待出库存</th>
+              <th>在途库存</th>
+              <th>在库库存</th>
+              <th>已发库存</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+
+      <div class="card side-panel">
+        <div class="panel-title">
+          <h3>库存流水单据</h3>
+          <button class="btn secondary" onclick="resetPanel()">清空</button>
+        </div>
+        <div id="panelMeta" class="panel-meta">
+          点击左侧任意库存数字，查看对应库存流水单据。
+        </div>
+        <div id="flowList" class="flow-list">
+          <div class="empty">
+            当前未选中库存项。<br/>
+            请选择某个库存数字查看该库存的变化流水。
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const data = [
+      { delivery: 'FBM', store: 'Agilestic', country: '美国', msku: 'MSKU-A01', eprsku: 'EPRSKU-A01-202405', purchase: 300, total: 1240, pick: 120, transit: 180, warehouse: 900, shipped: 40, abnormal: false },
+      { delivery: 'FBM', store: 'Mericonia', country: '德国', msku: 'MSKU-M02', eprsku: 'EPRSKU-M02-202405', purchase: 120, total: 860, pick: 80, transit: 140, warehouse: 610, shipped: 30, abnormal: false },
+      { delivery: 'FBM', store: 'Klicelor', country: '英国', msku: 'MSKU-K03', eprsku: 'EPRSKU-K03-202405', purchase: 240, total: 1520, pick: 220, transit: 210, warehouse: 1030, shipped: 60, abnormal: false },
+      { delivery: 'FBM', store: 'Scoctcoc', country: '加拿大', msku: 'MSKU-S04', eprsku: 'EPRSKU-S04-202405', purchase: 60, total: 740, pick: 50, transit: 90, warehouse: 580, shipped: 20, abnormal: true },
+      { delivery: 'FBM', store: 'Walmart-M', country: '中国', msku: 'MSKU-W05', eprsku: 'EPRSKU-W05-202405', purchase: 150, total: 980, pick: 150, transit: 160, warehouse: 650, shipped: 20, abnormal: false },
+      { delivery: 'FBM', store: 'TikTok!-美国', country: '美国', msku: 'MSKU-T06', eprsku: 'EPRSKU-T06-202405', purchase: 200, total: 1320, pick: 140, transit: 260, warehouse: 860, shipped: 60, abnormal: false },
+      { delivery: 'FBA', store: 'Wayfair-A店铺', country: '英国', msku: 'MSKU-WA7', eprsku: 'EPRSKU-WA7-202405', purchase: 90, total: 610, pick: 70, transit: 100, warehouse: 410, shipped: 30, abnormal: false },
+      { delivery: 'FBA', store: 'Wayfair-M店铺', country: '美国', msku: 'MSKU-WM8', eprsku: 'EPRSKU-WM8-202405', purchase: 180, total: 1140, pick: 90, transit: 170, warehouse: 820, shipped: 60, abnormal: true }
+    ];
+
+    function renderTable() {
+      const deliveryFilter = document.getElementById('deliveryFilter').value;
+      const storeFilter = document.getElementById('storeFilter').value;
+      const countryFilter = document.getElementById('countryFilter').value;
+      const keyword = document.getElementById('keywordFilter').value.trim().toLowerCase();
+
+      const filtered = data.filter(item => {
+        const okDelivery = deliveryFilter === 'ALL' || item.delivery === deliveryFilter;
+        const okStore = storeFilter === 'ALL' || item.store === storeFilter;
+        const okCountry = countryFilter === 'ALL' || item.country === countryFilter;
+        const okKeyword = !keyword ||
+          item.msku.toLowerCase().includes(keyword) ||
+          item.eprsku.toLowerCase().includes(keyword);
+        return okDelivery && okStore && okCountry && okKeyword;
+      });
+
+      document.getElementById('tableBody').innerHTML = filtered.map(item => `
+        <tr>
+          <td><span class="badge ${item.delivery === 'FBM' ? 'blue' : 'purple'}">${item.delivery}</span></td>
+          <td>${item.store}</td>
+          <td>${item.country}</td>
+          <td>${item.msku}</td>
+          <td>${item.eprsku}</td>
+          <td>${item.purchase}</td>
+          <td><span class="num-link" onclick="showFlows('${item.msku}','总库存',${item.total},'${item.delivery}','${item.store}','${item.country}')">${item.total}</span></td>
+          <td><span class="num-link" onclick="showFlows('${item.msku}','已排待出库存',${item.pick},'${item.delivery}','${item.store}','${item.country}')">${item.pick}</span></td>
+          <td><span class="num-link" onclick="showFlows('${item.msku}','在途库存',${item.transit},'${item.delivery}','${item.store}','${item.country}')">${item.transit}</span></td>
+          <td><span class="num-link" onclick="showFlows('${item.msku}','在库库存',${item.warehouse},'${item.delivery}','${item.store}','${item.country}')">${item.warehouse}</span></td>
+          <td><span class="num-link" onclick="showFlows('${item.msku}','已发库存',${item.shipped},'${item.delivery}','${item.store}','${item.country}')">${item.shipped}</span></td>
+        </tr>
+      `).join('');
+
+      document.getElementById('kpiTotal').innerText = filtered.length;
+      document.getElementById('kpiPurchase').innerText = filtered.reduce((s, i) => s + i.purchase, 0);
+      document.getElementById('kpiFBM').innerText = filtered.filter(i => i.delivery === 'FBM').reduce((s, i) => s + i.total, 0);
+      document.getElementById('kpiFBA').innerText = filtered.filter(i => i.delivery === 'FBA').reduce((s, i) => s + i.total, 0);
+      document.getElementById('kpiAbnormal').innerText = filtered.filter(i => i.abnormal).length;
+    }
+
+    function showFlows(msku, stockType, value, delivery, store, country) {
+      const panelMeta = document.getElementById('panelMeta');
+      const flowList = document.getElementById('flowList');
+
+      panelMeta.innerHTML = `
+        <b>当前选择：</b>${delivery} / ${store} / ${country}<br/>
+        <b>MSKU：</b>${msku}<br/>
+        <b>库存项：</b>${stockType}<br/>
+        <b>当前数量：</b>${value}
+      `;
+
+      const mockFlows = [
+        {
+          doc: delivery === 'FBA' ? 'AMZ-REC-240501-001' : 'XIYOU-IN-240501-001',
+          time: '2024-05-01 10:20',
+          desc: delivery === 'FBA'
+            ? 'FBA 数据源回传入库，自动同步到总库存。'
+            : '西邮入库单抓取，作为首个来源单据，完成系统入库。',
+          delta: '+500'
+        },
+        {
+          doc: 'PURCHASE-240501-003',
+          time: '2024-05-01 11:00',
+          desc: '采购数量登记，仅用于采购计划，不计入总库存。',
+          delta: '+300'
+        },
+        {
+          doc: 'ORDER-OUT-240501-019',
+          time: '2024-05-01 15:40',
+          desc: '店铺订单出库扣减，来源为订单同步。',
+          delta: '-32'
+        },
+        {
+          doc: 'RECON-240501-002',
+          time: '2024-05-01 18:30',
+          desc: delivery === 'FBA'
+            ? '亚马逊仓库回传库存对账，系统校准差异。'
+            : '谷仓回传库存对账，系统校准差异。',
+          delta: '+8'
+        }
+      ];
+
+      flowList.innerHTML = mockFlows.map(f => `
+        <div class="flow-item">
+          <div class="top">
+            <div class="doc">${f.doc}</div>
+            <div class="time">${f.time}</div>
+          </div>
+          <div class="desc">${f.desc}</div>
+          <div class="delta ${f.delta.startsWith('-') ? 'minus' : 'plus'}">
+            变动数量：${f.delta}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function resetFilters() {
+      document.getElementById('deliveryFilter').value = 'ALL';
+      document.getElementById('storeFilter').value = 'ALL';
+      document.getElementById('countryFilter').value = 'ALL';
+      document.getElementById('keywordFilter').value = '';
+      renderTable();
+    }
+
+    function resetPanel() {
+      document.getElementById('panelMeta').innerHTML =
+        '点击左侧任意库存数字，查看对应库存流水单据。';
+      document.getElementById('flowList').innerHTML = `
+        <div class="empty">
+          当前未选中库存项。<br/>
+          请选择某个库存数字查看该库存的变化流水。
+        </div>
+      `;
+    }
+
+    renderTable();
+  </script>
+</body>
+</html>
