@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>销量预测管理 Demo</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: #f5f6f8;
+      color: #222;
+    }
+    .topbar {
+      height: 52px;
+      display: flex;
+      align-items: center;
+      padding: 0 18px;
+      background: #fff;
+      border-bottom: 1px solid #d9d9d9;
+      font-size: 17px;
+      font-weight: 600;
+    }
+    .container { padding: 14px; max-width: 2200px; margin: 0 auto; }
+    .card {
+      background: #fff;
+      border: 1px solid #d9d9d9;
+      border-radius: 6px;
+      margin-bottom: 14px;
+      padding: 14px;
+    }
+    .section-title { font-size: 14px; font-weight: 600; margin-bottom: 10px; }
+    .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    .field { display: flex; align-items: center; gap: 8px; }
+    .field label { min-width: 76px; font-size: 13px; color: #444; }
+    input, select {
+      border: 1px solid #cfcfcf;
+      border-radius: 4px;
+      padding: 6px 8px;
+      font-size: 13px;
+      background: #fff;
+      outline: none;
+    }
+    input[type="text"], input[type="number"] { width: 128px; }
+    select { width: 128px; }
+    .btn {
+      border: 1px solid #bfbfbf;
+      background: #fff;
+      padding: 6px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    .btn.primary { background: #1677ff; border-color: #1677ff; color: #fff; }
+    .btn.success { background: #52c41a; border-color: #52c41a; color: #fff; }
+    .btn.link { border: none; background: transparent; color: #1677ff; padding: 0; }
+    .tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+    .tab {
+      padding: 8px 12px;
+      border: 1px solid #cfcfcf;
+      border-radius: 6px 6px 0 0;
+      background: #f7f7f7;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    .tab.active { background: #fff; border-bottom-color: #fff; font-weight: 600; }
+    .muted { color: #888; }
+    .table-wrap {
+      overflow: auto;
+      border: 1px solid #d9d9d9;
+      border-radius: 6px;
+      background: #fff;
+      max-height: 680px;
+    }
+    table { border-collapse: collapse; min-width: 2000px; width: 100%; font-size: 12px; }
+    th, td {
+      border: 1px solid #d9d9d9;
+      padding: 7px 6px;
+      text-align: center;
+      vertical-align: middle;
+      background: #fff;
+    }
+    th {
+      background: #f6f6f6;
+      font-weight: 600;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+    .sticky-left { position: sticky; left: 0; z-index: 3; background: #fff; }
+    .sticky-left-2 { position: sticky; left: 90px; z-index: 3; background: #fff; }
+    .sticky-left-3 { position: sticky; left: 230px; z-index: 3; background: #fff; }
+    .sticky-left-4 { position: sticky; left: 320px; z-index: 3; background: #fff; }
+    .sticky-left-5 { position: sticky; left: 390px; z-index: 3; background: #fff; }
+    .sticky-left-head { position: sticky; left: 0; top: 0; z-index: 4; background: #f6f6f6; }
+    .sticky-left-head-2 { position: sticky; left: 90px; top: 0; z-index: 4; background: #f6f6f6; }
+    .sticky-left-head-3 { position: sticky; left: 230px; top: 0; z-index: 4; background: #f6f6f6; }
+    .sticky-left-head-4 { position: sticky; left: 320px; top: 0; z-index: 4; background: #f6f6f6; }
+    .sticky-left-head-5 { position: sticky; left: 390px; top: 0; z-index: 4; background: #f6f6f6; }
+
+    .cycle-head { min-width: 170px; line-height: 1.3; }
+    .cycle-title { font-weight: 600; margin-bottom: 2px; }
+    .summary-bar { font-size: 11px; color: #444; margin-top: 2px; }
+
+    .cell-box {
+      display: grid;
+      gap: 3px;
+      min-width: 170px;
+      text-align: left;
+    }
+    .cell-line {
+      display: grid;
+      grid-template-columns: 72px 1fr;
+      align-items: center;
+      gap: 6px;
+    }
+    .readonly {
+      width: 100%;
+      padding: 3px 6px;
+      font-size: 12px;
+      text-align: center;
+      border: 1px solid #eee;
+      background: #fafafa;
+      border-radius: 4px;
+    }
+
+    .page { display: none; }
+    .page.active { display: block; }
+
+    .modal-mask {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.35);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+    }
+    .modal {
+      width: 980px;
+      max-width: calc(100vw - 30px);
+      background: #fff;
+      border-radius: 8px;
+      border: 1px solid #d9d9d9;
+      box-shadow: 0 10px 30px rgba(0,0,0,.18);
+      overflow: hidden;
+    }
+    .modal-header {
+      padding: 12px 14px;
+      background: #f6f6f6;
+      border-bottom: 1px solid #ddd;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 600;
+    }
+    .modal-body { padding: 14px; }
+    .modal-footer {
+      padding: 10px 14px;
+      border-top: 1px solid #ddd;
+      text-align: right;
+      background: #fafafa;
+    }
+    .compact th, .compact td { padding: 6px 6px; }
+    .tag {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 10px;
+      background: #f0f0f0;
+      font-size: 11px;
+    }
+    .mini { font-size: 11px; color: #666; }
+    .w100 { width: 100px !important; }
+    .w70 { width: 70px !important; }
+  </style>
+</head>
+<body>
+  <div class="topbar">销量预测管理 Demo 原型</div>
+
+  <div class="container">
+    <div class="tabs">
+      <div class="tab active" onclick="showPage('overviewPage', this)">店铺总览</div>
+      <div class="tab" onclick="showPage('forecastPage', this)">预测详情</div>
+    </div>
+
+    <div id="overviewPage" class="page active">
+      <div class="card">
+        <div class="section-title">筛选条件</div>
+        <div class="row">
+          <div class="field"><label>店铺</label><select id="shopFilter"></select></div>
+          <div class="field"><label>国家</label><select id="countryFilter"></select></div>
+          <div class="field"><label>状态</label><select><option>全部</option><option>待提交</option><option>待审核</option><option>已审核</option><option>已作废</option></select></div>
+          <button class="btn primary">查询</button>
+          <button class="btn">重置</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-title">店铺预测总览</div>
+        <table class="compact">
+          <thead>
+            <tr>
+              <th>店铺</th>
+              <th>国家</th>
+              <th>预测名称</th>
+              <th>状态</th>
+              <th>SKU总数</th>
+              <th>已填</th>
+              <th>未填</th>
+              <th>活动SKU数</th>
+              <th>提交人/时间</th>
+              <th>审核人/时间</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="overviewTbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="forecastPage" class="page">
+      <div class="card">
+        <div class="row" style="justify-content: space-between;">
+          <div>
+            <div><b>预测名称：</b><span id="forecastName">2026-07-09</span>　<b>店铺：</b>Agilestic　<b>国家：</b>美国　<b>状态：</b><span class="tag">待提交</span></div>
+            <div class="muted" style="margin-top:6px;">同比为历史数据，只读；支持快速调置同比日均；日均销量为预测日均，只读；活动销量由活动明细汇总得出。</div>
+          </div>
+          <div class="row">
+            <button class="btn">保存</button>
+            <button class="btn primary">提交审核</button>
+            <button class="btn success" onclick="nextForecast()">新建下一次预测</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-title">批量设置活动</div>
+        <div class="row">
+          <div class="field"><label>活动名称</label><input type="text" id="bulkActName" placeholder="如 PD 活动"></div>
+          <div class="field"><label>开始时间</label><input type="text" id="bulkStart" placeholder="2026-01-05"></div>
+          <div class="field"><label>结束时间</label><input type="text" id="bulkEnd" placeholder="2026-01-10"></div>
+          <div class="field"><label>活动销量</label><input type="number" id="bulkActQty" class="w100" value="0"></div>
+          <button class="btn primary" onclick="bulkSetActivity()">批量设置活动</button>
+          <span class="muted">例如亚马逊 PD 活动，选择开始/结束时间后，对所有 SKU 生效。</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-title">快速调置同比日均</div>
+        <div class="row">
+          <div class="field"><label>同比系数</label><input type="number" id="factorInput" value="1.00" step="0.01" class="w100"></div>
+          <button class="btn primary" onclick="applyFactor()">快速设置同比日均</button>
+          <span class="muted">同比日均为历史数据映射值，仅展示可快速调整；调整后自动重算预测日均。</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-title">SKU预测表</div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th class="sticky-left-head" rowspan="2" style="min-width:90px;">MSKU</th>
+                <th class="sticky-left-head-2" rowspan="2" style="min-width:140px;">款式</th>
+                <th class="sticky-left-head-3" rowspan="2" style="min-width:70px;">产品名称</th>
+                <th class="sticky-left-head-4" rowspan="2" style="min-width:70px;">长</th>
+                <th class="sticky-left-head-5" rowspan="2" style="min-width:70px;">宽</th>
+                <th rowspan="2" style="min-width:70px;">高</th>
+                <th rowspan="2" style="min-width:80px;">毛重-kg</th>
+                <th rowspan="2" style="min-width:80px;">毛重lbs</th>
+                <th rowspan="2" style="min-width:90px;">最新ERPSKU</th>
+                <th rowspan="2" style="min-width:90px;">状态</th>
+                <th rowspan="2" style="min-width:70px;">操作</th>
+                <th colspan="1" id="cycleHead1"></th>
+                <th colspan="1" id="cycleHead2"></th>
+                <th colspan="1" id="cycleHead3"></th>
+                <th colspan="1" id="cycleHead4"></th>
+                <th colspan="1" id="cycleHead5"></th>
+                <th colspan="1" id="cycleHead6"></th>
+                <th colspan="1" id="cycleHead7"></th>
+                <th colspan="1" id="cycleHead8"></th>
+                <th colspan="1" id="cycleHead9"></th>
+                <th colspan="1" id="cycleHead10"></th>
+                <th rowspan="2">总汇总</th>
+              </tr>
+              <tr id="cycleHeaderRow"></tr>
+            </thead>
+            <tbody id="forecastTbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="activityModal" class="modal-mask">
+    <div class="modal">
+      <div class="modal-header">
+        <div>活动明细</div>
+        <button class="btn" onclick="closeModal('activityModal')">关闭</button>
+      </div>
+      <div class="modal-body">
+        <div class="row" style="margin-bottom:10px;">
+          <div class="field"><label>活动名称</label><input type="text" id="actName" placeholder="请输入活动名称"></div>
+          <div class="field"><label>开始时间</label><input type="text" id="actStart" placeholder="2026-01-05"></div>
+          <div class="field"><label>结束时间</label><input type="text" id="actEnd" placeholder="2026-01-10"></div>
+          <div class="field"><label>活动销量</label><input type="number" id="actQty" class="w100" value="0"></div>
+          <button class="btn primary" onclick="addActivity()">添加</button>
+        </div>
+        <table class="compact">
+          <thead>
+            <tr>
+              <th>活动名称</th>
+              <th>开始日期</th>
+              <th>结束日期</th>
+              <th>活动销量</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="activityBody"></tbody>
+        </table>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="closeModal('activityModal')">取消</button>
+        <button class="btn primary" onclick="saveActivities()">保存并回填</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+  const shops = [
+    { shop: 'Agilestic', country: '美国' },
+    { shop: 'Mericonia', country: '德国' },
+    { shop: 'Klicelor', country: '英国' },
+    { shop: 'Scoctcoc', country: '加拿大' },
+    { shop: 'Walmart-M', country: '美国' },
+    { shop: 'TikTok!-美国', country: '美国' },
+    { shop: 'Wayfair-A店铺', country: '中国' },
+    { shop: 'Wayfair-M店铺', country: '中国' }
+  ];
+
+  const skuRows = [
+    { msku:'MSKU001', style:'黑色', pname:'耳机', l:'10', w:'8', h:'4', kg:'0.2', lbs:'0.44', erp:'ERP001', status:'在售' },
+    { msku:'MSKU002', style:'白色', pname:'数据线', l:'20', w:'6', h:'2', kg:'0.1', lbs:'0.22', erp:'ERP002', status:'在售' },
+    { msku:'MSKU003', style:'蓝色', pname:'支架', l:'15', w:'10', h:'5', kg:'0.3', lbs:'0.66', erp:'ERP003', status:'停售' }
+  ];
+
+  let cycles = [
+    { name: '2026-01-21', start:'01/01', end:'01/21' },
+    { name: '2026-02-11', start:'01/22', end:'02/11' },
+    { name: '2026-03-04', start:'02/12', end:'03/04' },
+    { name: '2026-03-25', start:'03/05', end:'03/25' },
+    { name: '2026-04-15', start:'03/26', end:'04/15' },
+    { name: '2026-05-06', start:'04/16', end:'05/06' },
+    { name: '2026-05-27', start:'05/07', end:'05/27' },
+    { name: '2026-06-17', start:'05/28', end:'06/17' },
+    { name: '2026-07-08', start:'06/18', end:'07/08' },
+    { name: '2026-07-29', start:'07/09', end:'07/29' }
+  ];
+
+  let cycleData = cycles.map((c, i) => ({
+    historicalYoyDayAvg: [120,100,95,88,90,92,96,98,101,105][i],
+    forecastDayAvg: [15,14,13,12,12,13,14,14,15,15][i],
+    actQty: [80,0,40,0,0,0,0,0,0,0][i],
+    actCount: [2,0,1,0,0,0,0,0,0,0][i],
+    totalDays: 21
+  }));
+
+  let activities = [
+    { name:'春节促销', start:'01/05', end:'01/10', qty:50 },
+    { name:'新客券', start:'01/12', end:'01/18', qty:30 }
+  ];
+
+  function buildOverview() {
+    const tbody = document.getElementById('overviewTbody');
+    tbody.innerHTML = shops.map((s, i) => {
+      const statuses = ['待提交', '待审核', '已审核', '已作废'];
+      return `
+        <tr>
+          <td>${s.shop}</td>
+          <td>${s.country}</td>
+          <td>2026-07-29</td>
+          <td><span class="tag">${statuses[i % 4]}</span></td>
+          <td>${120 + i * 8}</td>
+          <td>${95 + i * 5}</td>
+          <td>${25 + i * 3}</td>
+          <td>${12 + i}</td>
+          <td>张三<br><span class="mini">2026-05-12 09:30</span></td>
+          <td>李四<br><span class="mini">2026-05-13 14:20</span></td>
+          <td><button class="btn link" onclick="showPage('forecastPage')">进入</button></td>
+        </tr>`;
+    }).join('');
+  }
+
+  function renderCycleHeaders() {
+    document.getElementById('cycleHeaderRow').innerHTML = cycles.map((c, i) => `
+      <th class="cycle-head">
+        <div class="cycle-title">${c.start} - ${c.end}</div>
+        <div class="summary-bar"><b>汇总：</b><span id="cycleTotalHead${i}">-</span>　<b>活动：</b><span id="cycleActHead${i}">-</span></div>
+      </th>
+    `).join('');
+  }
+
+  function calcActQtyForCycle(c) {
+    return +c.actQty || 0;
+  }
+
+  function calcNonActQty(c) {
+    const nonActDays = Math.max((+c.totalDays || 0) - Math.max(+c.actCount || 0) * 2, 1);
+    return Math.round((+c.forecastDayAvg || 0) * nonActDays);
+  }
+
+  function calcTotal(c) {
+    return calcNonActQty(c) + calcActQtyForCycle(c);
+  }
+
+  function renderTable() {
+    const tbody = document.getElementById('forecastTbody');
+    tbody.innerHTML = skuRows.map((r) => {
+      const cells = cycleData.map((c, i) => {
+        const total = calcTotal(c);
+        document.getElementById(`cycleTotalHead${i}`).innerText = total;
+        document.getElementById(`cycleActHead${i}`).innerText = c.actQty ? `${c.actQty}/${c.actCount}` : '-';
+        return `
+          <td>
+            <div class="cell-box">
+              <div class="cell-line">
+                <span class="muted">同比日均</span>
+                <span class="readonly">${c.historicalYoyDayAvg}</span>
+              </div>
+              <div class="cell-line">
+                <span class="muted">预测日均</span>
+                <span class="readonly">${c.forecastDayAvg}</span>
+              </div>
+              <div class="cell-line">
+                <span class="muted">非活动销量</span>
+                <span class="readonly">${calcNonActQty(c)}</span>
+              </div>
+              ${c.actQty ? `
+              <div class="cell-line">
+                <span class="muted">活动销量</span>
+                <span class="readonly">${c.actQty}</span>
+              </div>` : ``}
+            </div>
+          </td>
+        `;
+      }).join('');
+
+      const total = cycleData.reduce((sum, c) => sum + calcTotal(c), 0);
+      return `
+        <tr>
+          <td class="sticky-left" style="min-width:90px;">${r.msku}</td>
+          <td class="sticky-left-2" style="min-width:140px; text-align:left;">${r.style}</td>
+          <td class="sticky-left-3" style="min-width:70px;">${r.pname}</td>
+          <td class="sticky-left-4" style="min-width:70px;">${r.l}</td>
+          <td class="sticky-left-5" style="min-width:70px;">${r.w}</td>
+          <td style="min-width:70px;">${r.h}</td>
+          <td style="min-width:80px;">${r.kg}</td>
+          <td style="min-width:80px;">${r.lbs}</td>
+          <td style="min-width:90px;">${r.erp}</td>
+          <td style="min-width:90px;">${r.status}</td>
+          <td style="min-width:70px;"><button class="btn link" onclick="openActivity()">活动</button></td>
+          ${cells}
+          <td><b>${total}</b></td>
+        </tr>`;
+    }).join('');
+  }
+
+  function applyFactor() {
+    const factor = parseFloat(document.getElementById('factorInput').value || '1');
+    cycleData = cycleData.map(c => ({
+      ...c,
+      historicalYoyDayAvg: c.historicalYoyDayAvg,
+      forecastDayAvg: Math.max(1, Math.round(c.historicalYoyDayAvg * factor / 10))
+    }));
+    renderTable();
+  }
+
+  function bulkSetActivity() {
+    const name = document.getElementById('bulkActName').value.trim() || '批量活动';
+    const start = document.getElementById('bulkStart').value.trim();
+    const end = document.getElementById('bulkEnd').value.trim();
+    const qty = +document.getElementById('bulkActQty').value || 0;
+    activities.push({ name, start, end, qty });
+    cycleData[0].actQty += qty;
+    cycleData[0].actCount += 1;
+    renderActivityTable();
+    renderTable();
+  }
+
+  function openActivity() {
+    renderActivityTable();
+    openModal('activityModal');
+  }
+
+  function renderActivityTable() {
+    const body = document.getElementById('activityBody');
+    body.innerHTML = activities.map((a, idx) => `
+      <tr>
+        <td><input type="text" value="${a.name}" style="width:180px;"></td>
+        <td><input type="text" value="${a.start}" style="width:110px;"></td>
+        <td><input type="text" value="${a.end}" style="width:110px;"></td>
+        <td><input type="number" value="${a.qty}" style="width:100px;"></td>
+        <td><button class="btn link" onclick="removeActivity(${idx})">删除</button></td>
+      </tr>
+    `).join('');
+  }
+
+  function addActivity() {
+    const name = document.getElementById('actName').value.trim();
+    const start = document.getElementById('actStart').value.trim();
+    const end = document.getElementById('actEnd').value.trim();
+    const qty = +document.getElementById('actQty').value || 0;
+    if (!name) return alert('请输入活动名称');
+    activities.push({ name, start, end, qty });
+    renderActivityTable();
+    document.getElementById('actName').value = '';
+    document.getElementById('actStart').value = '';
+    document.getElementById('actEnd').value = '';
+    document.getElementById('actQty').value = 0;
+  }
+
+  function removeActivity(idx) {
+    activities.splice(idx, 1);
+    renderActivityTable();
+  }
+
+  function saveActivities() {
+    cycleData[0].actQty = activities.reduce((s, a) => s + (+a.qty || 0), 0);
+    cycleData[0].actCount = activities.length;
+    renderTable();
+    closeModal('activityModal');
+  }
+
+  function nextForecast() {
+    cycles.shift();
+    cycles.push({ name: '2026-08-19', start:'07/30', end:'08/19' });
+    cycleData.shift();
+    cycleData.push({ historicalYoyDayAvg: 110, forecastDayAvg: 16, actQty: 0, actCount: 0, totalDays: 21 });
+    document.getElementById('forecastName').innerText = '2026-08-19';
+    renderCycleHeaders();
+    renderTable();
+  }
+
+  function showPage(id, tabEl) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    if (tabEl) tabEl.classList.add('active');
+  }
+
+  function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+  function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+  const shopFilter = document.getElementById('shopFilter');
+  const countryFilter = document.getElementById('countryFilter');
+  shopFilter.innerHTML = `<option>全部</option>` + shops.map(s => `<option>${s.shop}</option>`).join('');
+  countryFilter.innerHTML = `<option>全部</option>` + [...new Set(shops.map(s => s.country))].map(c => `<option>${c}</option>`).join('');
+
+  buildOverview();
+  renderCycleHeaders();
+  renderTable();
+  renderActivityTable();
+</script>
+</body>
+</html>
